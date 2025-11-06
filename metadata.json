@@ -1,0 +1,7 @@
+{
+  "name": "Linguacare",
+  "description": "An interactive speech and language therapy web app that provides pronunciation analysis and feedback using AI to help patients improve their speech.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
