@@ -85,6 +85,16 @@ const loadVoices = (): Promise<SpeechSynthesisVoice[]> => {
                 resolve(voiceCache);
             }
         };
+        // 🩵 Force-warmup for browsers that delay voice loading
+        try {
+            const dummy = new SpeechSynthesisUtterance('');
+            window.speechSynthesis.speak(dummy);
+            window.speechSynthesis.cancel();
+            console.log("🔊 Warmup utterance triggered to load voices early.");
+        } catch (e) {
+            console.warn("Warmup failed:", e);
+        }
+
     });
     
     return voiceLoaderPromise;
@@ -102,6 +112,34 @@ export const useTextToSpeech = () => {
   const timeoutRef = useRef<number | null>(null);
   // A ref to hold the current utterance to prevent it from being garbage collected prematurely.
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  useEffect(() => {
+  isMountedRef.current = true;
+  console.log("✅ [useTextToSpeech] Component mounted, isMountedRef = true");
+
+  return () => {
+    isMountedRef.current = false;
+    console.log("🧹 [useTextToSpeech] Component unmounted, isMountedRef = false");
+  };
+}, []);
+
+   useEffect(() => {
+  const unlockAudio = () => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try {
+        const dummy = new SpeechSynthesisUtterance('');
+        window.speechSynthesis.speak(dummy);
+        window.speechSynthesis.cancel();
+        console.log("🔓 Speech synthesis unlocked by click event.");
+      } catch (err) {
+        console.warn("Could not unlock speech synthesis:", err);
+      }
+    }
+  };
+
+  document.addEventListener('click', unlockAudio, { once: true });
+  return () => document.removeEventListener('click', unlockAudio);
+}, []);
+
 
     useEffect(() => {
         const categorizeVoices = (voices: SpeechSynthesisVoice[]) => {
@@ -143,10 +181,18 @@ export const useTextToSpeech = () => {
     }, []);
 
   const speak = useCallback(async (text: string, language: Language) => {
+    console.log("🔊 [speak] Function triggered with text:", text, "and language:", language);
+    console.log("🧠 [speak] Checking environment:", {
+    hasWindow: typeof window !== 'undefined',
+    hasSpeech: !!window?.speechSynthesis,
+    isMounted: isMountedRef.current
+});
+
+
     if (typeof window === 'undefined' || !window.speechSynthesis || !isMountedRef.current) {
       return;
     }
-
+    
     const resetState = (reason: string) => {
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
@@ -160,24 +206,36 @@ export const useTextToSpeech = () => {
     };
 
     window.speechSynthesis.cancel();
+    console.log("🧹 [speak] Cleared any previous speech instances.");
+
     setIsSpeaking(true);
     console.log(`TTS: Attempting to speak "${text}" in ${language}.`);
 
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    console.log("⏳ [speak] Starting 8s timeout failsafe...");
+
     timeoutRef.current = window.setTimeout(() => {
         console.warn(`TTS Failsafe: Timed out after 8s for "${text}". Forcibly cancelling and resetting state.`);
         window.speechSynthesis.cancel();
+
         resetState("Failsafe Timeout");
     }, 8000);
 
     try {
         const voices = await loadVoices();
+        console.log("🎤 [speak] Loaded voices:", voices.map(v => `${v.name} (${v.lang})`));
+        console.log("🧩 [speak] Total voices available:", voices.length);
+        console.log("📜 [speak] Text to speak:", text);
+
+        console.log("🎤 [speak] Loaded voices:", voices.map(v => v.name));
+
         if (voices.length === 0) {
             throw new Error("No speech synthesis voices are available.");
         }
 
         const utterance = new SpeechSynthesisUtterance(text);
         utteranceRef.current = utterance;
+        console.log("✨ [speak] Created new SpeechSynthesisUtterance instance.");
 
         const langCodeMap = { english: 'en-US', tamil: 'ta-IN', malayalam: 'ml-IN' };
         const langCode = langCodeMap[language];
@@ -222,6 +280,10 @@ export const useTextToSpeech = () => {
         };
         
         window.speechSynthesis.speak(utterance);
+        console.log("🚀 [speak] Starting speech synthesis now...");
+        console.log("🗣️ [speak] About to call window.speechSynthesis.speak() with voice:", utterance.voice?.name);
+
+
 
     } catch(error) {
         console.error("TTS Error: Failed to initiate speech:", error);

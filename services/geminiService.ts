@@ -1,11 +1,10 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import type { PronunciationFeedback, Language, DetailedPhraseAnalysis } from '../types';
 
-if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable not set");
+if (!import.meta.env.VITE_GEMINI_API_KEY) {
+  throw new Error("VITE_GEMINI_API_KEY environment variable not set");
 }
-
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({apiKey: import.meta.env.VITE_GEMINI_API_KEY,});
 
 const blobToBase64 = (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -87,6 +86,8 @@ const detailedPhraseAnalysisSchema = {
 };
 
 export const analyzePronunciation = async (promptText: string, audioBlob: Blob, language: Language): Promise<PronunciationFeedback> => {
+    console.log("🚀 analyzePronunciation() was called!");
+
     const audioData = await blobToBase64(audioBlob);
 
     const prompt = `You are an expert speech and language therapist AI named 'Linguacare Bot'. Your analysis must be guided by the principles of a multilingual pronunciation assistant. You must judge the user's speech based on accurate, natural phonetics for the specified language, without expecting translation.
@@ -108,7 +109,10 @@ export const analyzePronunciation = async (promptText: string, audioBlob: Blob, 
       1. \`userPronunciationError\`: First, identify and describe the specific mistake the user made. Be precise. Examples: "The user said 'sip' instead of 'ship', replacing the 'sh' sound with 's'." or "The vowel sound in 'run' was too long, sounding more like 'ruun'."
       2. \`tip\`: Based *directly* on the \`userPronunciationError\`, provide one single, highly specific, and actionable tip to fix the mistake. This is the most important part of the feedback. Examples: "For the 'sh' sound, try rounding your lips and pushing air through them, like you're telling someone to be quiet." or "Keep the vowel sound in 'run' short and quick."
       3. \`pronunciationGuide\`: Provide a simplified phonetic guide for the correct pronunciation.`;
-    
+    console.log("🎤 Audio Blob Info:", audioBlob);
+    console.log("📦 Blob Type:", audioBlob.type);
+    console.log("🧩 Base64 snippet:", audioData?.slice(0, 80) + "...");
+
     const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: {

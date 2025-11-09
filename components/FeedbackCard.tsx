@@ -128,27 +128,31 @@ export const FeedbackCard: React.FC<FeedbackCardProps> = ({ feedback, audioUrl, 
                         return (
                             <div key={index} className="bg-red-50 rounded-lg border border-red-200">
                                 <button
-                                    onClick={() => setExpandedIndex(isExpanded ? null : index)}
-                                    className="w-full flex items-center justify-between p-3 rounded-lg text-left text-red-800 hover:bg-red-100/50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1"
-                                    aria-expanded={isExpanded}
-                                    aria-controls={`word-details-${index}`}
+                                onClick={() => setExpandedIndex(isExpanded ? null : index)}
+                                className="w-full flex items-center justify-between p-3 rounded-lg text-left text-red-800 hover:bg-red-100/50 transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-1"
+                                aria-expanded={isExpanded}
+                                aria-controls={`word-details-${index}`}
                                 >
-                                    <div className="flex items-center gap-2">
-                                        <XCircleIcon />
-                                        <span className="font-medium">{word.word}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); speak(word.word, language); }}
-                                            disabled={isSpeaking}
-                                            className="p-1.5 text-teal-600 hover:text-teal-800 disabled:text-slate-400 disabled:cursor-not-allowed rounded-full hover:bg-red-100 transition-colors"
-                                            aria-label={`Listen to the word ${word.word}`}
-                                        >
-                                            <SpeakerIcon className="h-5 w-5" />
-                                        </button>
-                                        <ChevronDownIcon className={`h-5 w-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
-                                    </div>
+                                <div className="flex items-center gap-2">
+                                    <XCircleIcon />
+                                    <span className="font-medium">{word.word}</span>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <span
+                                    onClick={(e) => { e.stopPropagation(); speak(word.word, language); }}
+                                    disabled={isSpeaking}
+                                    className="p-1.5 text-teal-600 hover:text-teal-800 disabled:text-slate-400 disabled:cursor-not-allowed rounded-full hover:bg-red-100 transition-colors cursor-pointer"
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-label={`Listen to the word ${word.word}`}
+                                    >
+                                    <SpeakerIcon className="h-5 w-5" />
+                                    </span>
+                                    <ChevronDownIcon className={`h-5 w-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                </div>
                                 </button>
+
                                 {isExpanded && (
                                     <div 
                                         id={`word-details-${index}`}
